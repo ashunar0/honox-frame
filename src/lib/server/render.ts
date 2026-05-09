@@ -1,7 +1,10 @@
 import type { Context, MiddlewareHandler } from "hono";
+import { Fragment, createElement } from "hono/jsx";
 
 type PageProps = Record<string, unknown>;
 type PageComponent = (props: any) => unknown;
+
+export const PAGE_META_ID = "__honox_page__";
 
 export function withHonoxFrame(
   innerMiddleware: MiddlewareHandler,
@@ -46,6 +49,23 @@ function renderPage(
     });
   }
 
-  const jsx = Component(safeProps);
-  return originalRender(jsx);
+  const meta = serializePageMeta({
+    component: name,
+    props: safeProps,
+    url: c.req.url,
+  });
+
+  const scriptEl = createElement("script", {
+    id: PAGE_META_ID,
+    type: "application/json",
+    dangerouslySetInnerHTML: { __html: meta },
+  } as any);
+  const pageEl = createElement(Component, safeProps);
+  const wrapped = createElement(Fragment, null, scriptEl as any, pageEl as any);
+
+  return (originalRender as (jsx: unknown) => Response)(wrapped);
+}
+
+function serializePageMeta(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }

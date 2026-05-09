@@ -10,23 +10,16 @@ type PageData = {
 
 type NavigateOptions = {
   onAfterSwap?: () => void | Promise<void>;
-  loadPage?: (name: string) => Promise<unknown>;
-  renderPage?: (
-    Component: unknown,
-    props: Record<string, unknown>,
-    frame: Element,
-  ) => void | Promise<void>;
+  onPageData?: (data: PageData) => void | Promise<void>;
 };
 
 let afterSwap: NavigateOptions["onAfterSwap"];
-let loadPage: NavigateOptions["loadPage"];
-let renderPage: NavigateOptions["renderPage"];
+let onPageData: NavigateOptions["onPageData"];
 
 export function initNavigation(opts: NavigateOptions = {}) {
   if (typeof window === "undefined") return;
   afterSwap = opts.onAfterSwap;
-  loadPage = opts.loadPage;
-  renderPage = opts.renderPage;
+  onPageData = opts.onPageData;
 
   document.addEventListener("click", (e) => {
     if (e.defaultPrevented) return;
@@ -171,31 +164,14 @@ async function handleJsonResponse(
   finalUrl: string,
   opts: { updateHistory: boolean },
 ): Promise<void> {
-  if (!loadPage || !renderPage) {
+  if (!onPageData) {
     fullReload(finalUrl);
     return;
   }
 
   const data = (await response.json()) as PageData;
-  const frame = document.querySelector(`[${FRAME_ATTR}="${MAIN_FRAME}"]`);
-  if (!frame) {
-    fullReload(finalUrl);
-    return;
-  }
 
-  let Component: unknown;
-  try {
-    Component = await loadPage(data.component);
-  } catch {
-    fullReload(finalUrl);
-    return;
-  }
-  if (!Component) {
-    fullReload(finalUrl);
-    return;
-  }
-
-  await renderPage(Component, data.props, frame);
+  await onPageData(data);
 
   if (data.title) document.title = data.title;
   if (opts.updateHistory) {
@@ -260,3 +236,6 @@ async function handleHtmlResponse(
 function fullReload(url: string): void {
   window.location.href = url;
 }
+
+export { FRAME_ATTR, MAIN_FRAME };
+export type { PageData };
