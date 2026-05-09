@@ -6,6 +6,7 @@ type PageData = {
   props: Record<string, unknown>;
   url?: string;
   title?: string;
+  partial?: string[];
 };
 
 type NavigateOptions = {
@@ -27,7 +28,8 @@ export function initNavigation(opts: NavigateOptions = {}) {
     if (!link) return;
     if (!shouldInterceptLink(e, link)) return;
     e.preventDefault();
-    void visitLink(link.href);
+    const only = parseOnly(link.getAttribute("data-honox-only"));
+    void visitLink(link.href, { only });
   });
 
   document.addEventListener("submit", (e) => {
@@ -68,13 +70,17 @@ function shouldInterceptForm(form: HTMLFormElement): boolean {
 
 async function visitLink(
   url: string,
-  opts: { updateHistory?: boolean } = {},
+  opts: { updateHistory?: boolean; only?: string[] } = {},
 ): Promise<void> {
   const updateHistory = opts.updateHistory ?? true;
+  const headers: Record<string, string> = { "X-Honox-Mode": "json" };
+  if (opts.only && opts.only.length > 0) {
+    headers["X-Honox-Partial-Data"] = opts.only.join(",");
+  }
   let response: Response;
   try {
     response = await fetch(url, {
-      headers: { "X-Honox-Mode": "json" },
+      headers,
       credentials: "same-origin",
     });
   } catch {
@@ -235,6 +241,15 @@ async function handleHtmlResponse(
 
 function fullReload(url: string): void {
   window.location.href = url;
+}
+
+function parseOnly(raw: string | null): string[] | undefined {
+  if (!raw) return undefined;
+  const keys = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return keys.length > 0 ? keys : undefined;
 }
 
 export { FRAME_ATTR, MAIN_FRAME };

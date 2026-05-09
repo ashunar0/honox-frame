@@ -42,10 +42,18 @@ function renderPage(
   const safeProps = props ?? {};
 
   if (mode === "json") {
+    const partial = parsePartialHeader(c.req.header("X-Honox-Partial-Data"));
+    const responseProps =
+      partial && partial.length > 0
+        ? Object.fromEntries(
+            Object.entries(safeProps).filter(([k]) => partial.includes(k)),
+          )
+        : safeProps;
     return c.json({
       component: name,
-      props: safeProps,
+      props: responseProps,
       url: c.req.url,
+      partial: partial ?? undefined,
     });
   }
 
@@ -68,4 +76,13 @@ function renderPage(
 
 function serializePageMeta(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+function parsePartialHeader(raw: string | undefined): string[] | null {
+  if (!raw) return null;
+  const keys = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return keys.length > 0 ? keys : null;
 }

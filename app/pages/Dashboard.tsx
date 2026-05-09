@@ -31,7 +31,7 @@ export default function Dashboard({ users, posts, stats }: Props) {
         </a>
       </div>
 
-      <Card title="Users" sub="100ms delay" fetchedAt={users.fetchedAt} refreshTo="/dashboard?refresh=users">
+      <Card title="Users" sub="100ms delay" fetchedAt={users.fetchedAt} refreshTo="/dashboard?refresh=users" only="users">
         <ul class="text-sm space-y-1">
           {users.items.map((u) => (
             <li>{u}</li>
@@ -39,7 +39,7 @@ export default function Dashboard({ users, posts, stats }: Props) {
         </ul>
       </Card>
 
-      <Card title="Posts" sub="300ms delay" fetchedAt={posts.fetchedAt} refreshTo="/dashboard?refresh=posts">
+      <Card title="Posts" sub="300ms delay" fetchedAt={posts.fetchedAt} refreshTo="/dashboard?refresh=posts" only="posts">
         <ul class="text-sm space-y-1">
           {posts.items.map((p) => (
             <li>{p}</li>
@@ -47,7 +47,7 @@ export default function Dashboard({ users, posts, stats }: Props) {
         </ul>
       </Card>
 
-      <Card title="Stats" sub="500ms delay" fetchedAt={stats.fetchedAt} refreshTo="/dashboard?refresh=stats">
+      <Card title="Stats" sub="500ms delay" fetchedAt={stats.fetchedAt} refreshTo="/dashboard?refresh=stats" only="stats">
         <dl class="text-sm grid grid-cols-2 gap-1">
           <dt class="text-slate-500">Total users</dt>
           <dd>{stats.totalUsers}</dd>
@@ -64,12 +64,14 @@ function Card({
   sub,
   fetchedAt,
   refreshTo,
+  only,
   children,
 }: {
   title: string;
   sub: string;
   fetchedAt: string;
   refreshTo: string;
+  only: string;
   children?: unknown;
 }) {
   return (
@@ -85,6 +87,7 @@ function Card({
           </span>
           <a
             href={refreshTo}
+            data-honox-only={only}
             class="px-3 py-1 text-sm bg-blue-500 text-white rounded"
           >
             このセクションだけ refresh
