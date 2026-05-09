@@ -1,14 +1,32 @@
 const FRAME_ATTR = "data-honox-frame";
+const MAIN_FRAME = "main";
+
+type PageData = {
+  component: string;
+  props: Record<string, unknown>;
+  url?: string;
+  title?: string;
+};
 
 type NavigateOptions = {
   onAfterSwap?: () => void | Promise<void>;
+  loadPage?: (name: string) => Promise<unknown>;
+  renderPage?: (
+    Component: unknown,
+    props: Record<string, unknown>,
+    frame: Element,
+  ) => void | Promise<void>;
 };
 
 let afterSwap: NavigateOptions["onAfterSwap"];
+let loadPage: NavigateOptions["loadPage"];
+let renderPage: NavigateOptions["renderPage"];
 
 export function initNavigation(opts: NavigateOptions = {}) {
   if (typeof window === "undefined") return;
   afterSwap = opts.onAfterSwap;
+  loadPage = opts.loadPage;
+  renderPage = opts.renderPage;
 
   document.addEventListener("click", (e) => {
     if (e.defaultPrevented) return;
@@ -63,7 +81,7 @@ async function visitLink(
   let response: Response;
   try {
     response = await fetch(url, {
-      headers: { "X-Honox-Frame": "true" },
+      headers: { "X-Honox-Mode": "json" },
       credentials: "same-origin",
     });
   } catch {
@@ -93,7 +111,7 @@ async function submitForm(
   let fetchUrl = new URL(action, location.href).href;
   const init: RequestInit = {
     method,
-    headers: { "X-Honox-Frame": "true" },
+    headers: { "X-Honox-Mode": "json" },
     credentials: "same-origin",
   };
 
@@ -134,11 +152,71 @@ async function handleResponse(
   opts: { updateHistory: boolean },
 ): Promise<void> {
   const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    await handleJsonResponse(response, finalUrl, opts);
+    return;
+  }
+
   if (!contentType.includes("text/html")) {
     fullReload(finalUrl);
     return;
   }
 
+  await handleHtmlResponse(response, finalUrl, opts);
+}
+
+async function handleJsonResponse(
+  response: Response,
+  finalUrl: string,
+  opts: { updateHistory: boolean },
+): Promise<void> {
+  if (!loadPage || !renderPage) {
+    fullReload(finalUrl);
+    return;
+  }
+
+  const data = (await response.json()) as PageData;
+  const frame = document.querySelector(`[${FRAME_ATTR}="${MAIN_FRAME}"]`);
+  if (!frame) {
+    fullReload(finalUrl);
+    return;
+  }
+
+  let Component: unknown;
+  try {
+    Component = await loadPage(data.component);
+  } catch {
+    fullReload(finalUrl);
+    return;
+  }
+  if (!Component) {
+    fullReload(finalUrl);
+    return;
+  }
+
+  await renderPage(Component, data.props, frame);
+
+  if (data.title) document.title = data.title;
+  if (opts.updateHistory) {
+    history.pushState({}, "", finalUrl);
+    window.scrollTo(0, 0);
+  }
+
+  if (afterSwap) {
+    try {
+      await afterSwap();
+    } catch (err) {
+      console.error("[honox-frame] afterSwap failed:", err);
+    }
+  }
+}
+
+async function handleHtmlResponse(
+  response: Response,
+  finalUrl: string,
+  opts: { updateHistory: boolean },
+): Promise<void> {
   const html = await response.text();
   const newDoc = new DOMParser().parseFromString(html, "text/html");
 
