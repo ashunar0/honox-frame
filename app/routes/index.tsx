@@ -1,13 +1,12 @@
-import { createRoute } from 'honox/factory'
-import Counter from '../islands/counter'
+import { createRoute } from "honox/factory";
 
 export default createRoute((c) => {
-  const name = c.req.query('name') ?? 'Hono'
   return c.render(
-    <div class="py-8 text-center">
-      <title>{name}</title>
-      <h1 class="text-3xl font-bold">Hello, {name}!</h1>
-      <Counter />
-    </div>
-  )
-})
+    <div>
+      <title>Home</title>
+      <h1 class="text-3xl font-bold mb-4">Home</h1>
+      <p class="mb-2">これは Home page なのだ。</p>
+      <p class="text-sm text-slate-500">Rendered at: {new Date().toLocaleTimeString()}</p>
+    </div>,
+  );
+});
