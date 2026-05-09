@@ -1,3 +1,5 @@
+import { router } from "../../src/lib/client/navigate";
+
 type Section = {
   fetchedAt: string;
 };
@@ -29,6 +31,28 @@ export default function Dashboard({ users, posts, stats }: Props) {
         >
           全部更新
         </a>
+        <button
+          type="button"
+          onClick={() => router.reload({ only: ["users", "posts", "stats"] })}
+          class="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded"
+        >
+          imperative: 全部 reload
+        </button>
+        <button
+          type="button"
+          onClick={() => router.reload({ only: ["posts"] })}
+          class="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded"
+        >
+          imperative: posts だけ
+        </button>
+        <form method="post" action="/dashboard" data-honox-only="posts">
+          <button
+            type="submit"
+            class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded"
+          >
+            form POST: posts だけ
+          </button>
+        </form>
       </div>
 
       <Card title="Users" sub="100ms delay" fetchedAt={users.fetchedAt} refreshTo="/dashboard?refresh=users" only="users">

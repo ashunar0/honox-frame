@@ -40,7 +40,16 @@ function stamp(): string {
   return `${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, "0")}`;
 }
 
-export default createRoute((c) => {
+export const GET = createRoute((c) => {
+  return c.render(Dashboard, {
+    users: loadUsers,
+    posts: loadPosts,
+    stats: loadStats,
+  });
+});
+
+export const POST = createRoute(async (c) => {
+  await c.req.parseBody().catch(() => undefined);
   return c.render(Dashboard, {
     users: loadUsers,
     posts: loadPosts,

@@ -107,10 +107,19 @@ async function submitForm(
 
   const formData = new FormData(form, submitter ?? undefined);
 
+  const onlyRaw =
+    submitter?.getAttribute("data-honox-only") ??
+    form.getAttribute("data-honox-only");
+  const only = parseOnly(onlyRaw);
+
   let fetchUrl = new URL(action, location.href).href;
+  const headers: Record<string, string> = { "X-Honox-Mode": "json" };
+  if (only && only.length > 0) {
+    headers["X-Honox-Partial-Data"] = only.join(",");
+  }
   const init: RequestInit = {
     method,
-    headers: { "X-Honox-Mode": "json" },
+    headers,
     credentials: "same-origin",
   };
 
@@ -251,6 +260,23 @@ function parseOnly(raw: string | null): string[] | undefined {
     .filter(Boolean);
   return keys.length > 0 ? keys : undefined;
 }
+
+type VisitOptions = { only?: string[] };
+type ReloadOptions = { only?: string[] };
+
+async function visit(url: string, opts: VisitOptions = {}): Promise<void> {
+  await visitLink(url, { only: opts.only });
+}
+
+async function reload(opts: ReloadOptions = {}): Promise<void> {
+  await visitLink(location.href, {
+    only: opts.only,
+    updateHistory: false,
+  });
+}
+
+export const router = { visit, reload };
+export type { VisitOptions, ReloadOptions };
 
 export { FRAME_ATTR, MAIN_FRAME };
 export type { PageData };
