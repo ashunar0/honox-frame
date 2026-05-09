@@ -11,6 +11,7 @@ declare module "hono" {
       content: string | Promise<string>,
       rendererProps?: any,
     ): Response | Promise<Response>;
+    (Component: () => unknown): Response | Promise<Response>;
     <P>(
       Component: (props: P) => unknown,
       props: P,
