@@ -1,7 +1,14 @@
 const FRAME_ATTR = "data-honox-frame";
 
-export function initNavigation() {
+type NavigateOptions = {
+  onAfterSwap?: () => void | Promise<void>;
+};
+
+let afterSwap: NavigateOptions["onAfterSwap"];
+
+export function initNavigation(opts: NavigateOptions = {}) {
   if (typeof window === "undefined") return;
+  afterSwap = opts.onAfterSwap;
 
   document.addEventListener("click", (e) => {
     if (e.defaultPrevented) return;
@@ -80,6 +87,14 @@ async function visit(
   if (updateHistory) {
     history.pushState({}, "", url);
     window.scrollTo(0, 0);
+  }
+
+  if (afterSwap) {
+    try {
+      await afterSwap();
+    } catch (err) {
+      console.error("[honox-frame] afterSwap failed:", err);
+    }
   }
 }
 
