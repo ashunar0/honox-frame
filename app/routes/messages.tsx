@@ -3,8 +3,13 @@ import Messages from "../pages/Messages";
 
 const messages: string[] = [];
 
+function loadMessages() {
+  console.log("[messages] computed");
+  return messages.slice();
+}
+
 export const GET = createRoute((c) => {
-  return c.render(Messages, { messages });
+  return c.render(Messages, { messages: loadMessages });
 });
 
 export const POST = createRoute(async (c) => {

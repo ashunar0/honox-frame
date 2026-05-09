@@ -11,7 +11,12 @@ export default function Messages({ messages }: Props) {
         Rendered at: {new Date().toLocaleTimeString()}
       </p>
 
-      <form method="post" action="/messages" class="mb-6 flex gap-2">
+      <form
+        method="post"
+        action="/messages"
+        data-honox-only="messages"
+        class="mb-6 flex gap-2"
+      >
         <input
           type="text"
           name="text"
