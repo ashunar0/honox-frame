@@ -20,6 +20,7 @@ export default jsxRenderer(({ children }) => {
             <nav class="flex flex-col gap-2 mb-6">
               <a href="/" class="text-blue-600 hover:underline">Home</a>
               <a href="/about" class="text-blue-600 hover:underline">About</a>
+              <a href="/messages" class="text-blue-600 hover:underline">Messages</a>
             </nav>
             <div class="border-t pt-4">
               <p class="text-xs text-slate-500 mb-2">Counter（sidebar / Frame の外）</p>

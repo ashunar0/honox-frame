@@ -14,18 +14,25 @@ export function initNavigation(opts: NavigateOptions = {}) {
     if (e.defaultPrevented) return;
     const link = (e.target as Element | null)?.closest?.("a");
     if (!link) return;
-    if (!shouldIntercept(e, link)) return;
-
+    if (!shouldInterceptLink(e, link)) return;
     e.preventDefault();
-    void visit(link.href);
+    void visitLink(link.href);
+  });
+
+  document.addEventListener("submit", (e) => {
+    if (e.defaultPrevented) return;
+    const form = e.target as HTMLFormElement;
+    if (!shouldInterceptForm(form)) return;
+    e.preventDefault();
+    void submitForm(form, e as SubmitEvent);
   });
 
   window.addEventListener("popstate", () => {
-    void visit(location.href, { updateHistory: false });
+    void visitLink(location.href, { updateHistory: false });
   });
 }
 
-function shouldIntercept(e: MouseEvent, link: HTMLAnchorElement): boolean {
+function shouldInterceptLink(e: MouseEvent, link: HTMLAnchorElement): boolean {
   if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return false;
   if (e.button !== 0) return false;
   if (link.target && link.target !== "_self") return false;
@@ -36,12 +43,23 @@ function shouldIntercept(e: MouseEvent, link: HTMLAnchorElement): boolean {
   return true;
 }
 
-async function visit(
+function shouldInterceptForm(form: HTMLFormElement): boolean {
+  if (form.target && form.target !== "_self") return false;
+  if (form.hasAttribute("data-no-frame")) return false;
+  try {
+    const url = new URL(form.action, location.href);
+    if (url.origin !== location.origin) return false;
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+async function visitLink(
   url: string,
   opts: { updateHistory?: boolean } = {},
 ): Promise<void> {
   const updateHistory = opts.updateHistory ?? true;
-
   let response: Response;
   try {
     response = await fetch(url, {
@@ -52,9 +70,72 @@ async function visit(
     fullReload(url);
     return;
   }
+  await handleResponse(response, response.url || url, { updateHistory });
+}
 
-  if (!response.ok) {
-    fullReload(url);
+async function submitForm(
+  form: HTMLFormElement,
+  e: SubmitEvent,
+): Promise<void> {
+  const submitter = e.submitter as
+    | HTMLButtonElement
+    | HTMLInputElement
+    | null;
+  const action = submitter?.formAction || form.action || location.href;
+  const method = (submitter?.formMethod || form.method || "GET").toUpperCase();
+  const enctype =
+    submitter?.formEnctype ||
+    form.enctype ||
+    "application/x-www-form-urlencoded";
+
+  const formData = new FormData(form, submitter ?? undefined);
+
+  let fetchUrl = new URL(action, location.href).href;
+  const init: RequestInit = {
+    method,
+    headers: { "X-Honox-Frame": "true" },
+    credentials: "same-origin",
+  };
+
+  if (method === "GET") {
+    const params = formDataToParams(formData);
+    const u = new URL(fetchUrl);
+    u.search = params.toString();
+    fetchUrl = u.href;
+  } else if (enctype === "multipart/form-data") {
+    init.body = formData;
+  } else {
+    init.body = formDataToParams(formData);
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(fetchUrl, init);
+  } catch {
+    form.submit();
+    return;
+  }
+  await handleResponse(response, response.url || fetchUrl, {
+    updateHistory: true,
+  });
+}
+
+function formDataToParams(formData: FormData): URLSearchParams {
+  const params = new URLSearchParams();
+  formData.forEach((value, key) => {
+    if (typeof value === "string") params.append(key, value);
+  });
+  return params;
+}
+
+async function handleResponse(
+  response: Response,
+  finalUrl: string,
+  opts: { updateHistory: boolean },
+): Promise<void> {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("text/html")) {
+    fullReload(finalUrl);
     return;
   }
 
@@ -63,7 +144,7 @@ async function visit(
 
   const newFrames = newDoc.querySelectorAll(`[${FRAME_ATTR}]`);
   if (newFrames.length === 0) {
-    fullReload(url);
+    fullReload(finalUrl);
     return;
   }
 
@@ -78,14 +159,14 @@ async function visit(
   });
 
   if (!swapped) {
-    fullReload(url);
+    fullReload(finalUrl);
     return;
   }
 
   if (newDoc.title) document.title = newDoc.title;
 
-  if (updateHistory) {
-    history.pushState({}, "", url);
+  if (opts.updateHistory) {
+    history.pushState({}, "", finalUrl);
     window.scrollTo(0, 0);
   }
 
