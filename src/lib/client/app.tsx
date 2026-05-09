@@ -51,10 +51,6 @@ export function HonoxFrameApp({ initial }: { initial: AppState }) {
           };
         });
         if (merged) return;
-        // partial だが component 不一致 → full reload にフォールバック
-        console.warn(
-          "[honox-frame] partial response component mismatch; falling back to full",
-        );
       }
 
       const Component = await loadPageComponent(next.component);
