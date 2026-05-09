@@ -16,7 +16,7 @@ export function withHonoxFrame(
         if (typeof componentOrJsx === "function") {
           return renderPage(
             c,
-            originalRender as (jsx: unknown, props?: unknown) => Response,
+            originalRender as (jsx: unknown) => Response,
             componentOrJsx as PageComponent,
             props as PageProps | undefined,
           );
@@ -31,27 +31,24 @@ export function withHonoxFrame(
   };
 }
 
-function renderPage(
+async function renderPage(
   c: Context,
-  originalRender: (jsx: unknown, props?: unknown) => Response,
+  originalRender: (jsx: unknown) => Response,
   Component: PageComponent,
   props: PageProps | undefined,
-): Response {
+): Promise<Response> {
   const mode = c.req.header("X-Honox-Mode") || "html";
   const name = Component.name || "Page";
-  const safeProps = props ?? {};
+  const partial =
+    mode === "json"
+      ? parsePartialHeader(c.req.header("X-Honox-Partial-Data"))
+      : null;
+  const resolvedProps = await resolveProps(props ?? {}, partial);
 
   if (mode === "json") {
-    const partial = parsePartialHeader(c.req.header("X-Honox-Partial-Data"));
-    const responseProps =
-      partial && partial.length > 0
-        ? Object.fromEntries(
-            Object.entries(safeProps).filter(([k]) => partial.includes(k)),
-          )
-        : safeProps;
     return c.json({
       component: name,
-      props: responseProps,
+      props: resolvedProps,
       url: c.req.url,
       partial: partial ?? undefined,
     });
@@ -59,7 +56,7 @@ function renderPage(
 
   const meta = serializePageMeta({
     component: name,
-    props: safeProps,
+    props: resolvedProps,
     url: c.req.url,
   });
 
@@ -68,10 +65,32 @@ function renderPage(
     type: "application/json",
     dangerouslySetInnerHTML: { __html: meta },
   } as any);
-  const pageEl = createElement(Component, safeProps);
+  const pageEl = createElement(Component, resolvedProps);
   const wrapped = createElement(Fragment, null, scriptEl as any, pageEl as any);
 
-  return (originalRender as (jsx: unknown) => Response)(wrapped);
+  return originalRender(wrapped);
+}
+
+async function resolveProps(
+  props: PageProps,
+  partial: string[] | null,
+): Promise<PageProps> {
+  const result: PageProps = {};
+  const tasks: Promise<void>[] = [];
+  for (const [key, value] of Object.entries(props)) {
+    if (partial && !partial.includes(key)) continue;
+    if (typeof value === "function") {
+      tasks.push(
+        Promise.resolve((value as () => unknown)()).then((resolved) => {
+          result[key] = resolved;
+        }),
+      );
+    } else {
+      result[key] = value;
+    }
+  }
+  await Promise.all(tasks);
+  return result;
 }
 
 function serializePageMeta(data: unknown): string {

@@ -40,11 +40,10 @@ function stamp(): string {
   return `${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, "0")}`;
 }
 
-export default createRoute(async (c) => {
-  const [users, posts, stats] = await Promise.all([
-    loadUsers(),
-    loadPosts(),
-    loadStats(),
-  ]);
-  return c.render(Dashboard, { users, posts, stats });
+export default createRoute((c) => {
+  return c.render(Dashboard, {
+    users: loadUsers,
+    posts: loadPosts,
+    stats: loadStats,
+  });
 });

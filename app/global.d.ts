@@ -14,7 +14,7 @@ declare module "hono" {
     (Component: () => unknown): Response | Promise<Response>;
     <P>(
       Component: (props: P) => unknown,
-      props: P,
+      props: { [K in keyof P]: P[K] | (() => P[K] | Promise<P[K]>) },
     ): Response | Promise<Response>;
   }
 }
