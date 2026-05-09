@@ -28,6 +28,9 @@ const renderer = jsxRenderer(({ children }) => {
               <a href="/messages" class="text-blue-600 hover:underline">
                 Messages
               </a>
+              <a href="/dashboard" class="text-blue-600 hover:underline">
+                Dashboard
+              </a>
             </nav>
             <div class="border-t pt-4">
               <p class="text-xs text-slate-500 mb-2">
