@@ -37,7 +37,7 @@ export default function Messages({ messages }: Props) {
         </ul>
       )}
 
-      <div class="border-t pt-4 mt-6">
+      <div class="pt-4 mt-6">
         <p class="text-xs text-slate-500 mb-2">
           Counter（page / Frame の中）— Phase 3 JSON mode で submit 後も state
           維持されるか確認用
