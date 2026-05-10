@@ -14,16 +14,8 @@ export const GET = createRoute((c) => {
 
 export const POST = createRoute(async (c) => {
   const body = await c.req.parseBody();
-  const values: OrganizationInput = {
-    name: stringValue(body.name).trim(),
-    email: stringValue(body.email).trim(),
-    phone: stringValue(body.phone).trim(),
-    city: stringValue(body.city).trim(),
-    country: stringValue(body.country).trim(),
-  };
-
-  const errors: Partial<Record<keyof OrganizationInput, string>> = {};
-  if (!values.name) errors.name = "Name is required";
+  const values = parseInput(body);
+  const errors = validate(values);
 
   if (Object.keys(errors).length > 0) {
     c.status(422);
@@ -35,6 +27,22 @@ export const POST = createRoute(async (c) => {
     flash: { success: `Organization 「${created.name}」 を作成したのだ` },
   });
 });
+
+function parseInput(body: Record<string, unknown>): OrganizationInput {
+  return {
+    name: stringValue(body.name).trim(),
+    email: stringValue(body.email).trim(),
+    phone: stringValue(body.phone).trim(),
+    city: stringValue(body.city).trim(),
+    country: stringValue(body.country).trim(),
+  };
+}
+
+function validate(values: OrganizationInput) {
+  const errors: Partial<Record<keyof OrganizationInput, string>> = {};
+  if (!values.name) errors.name = "Name is required";
+  return errors;
+}
 
 function stringValue(v: unknown): string {
   return typeof v === "string" ? v : "";

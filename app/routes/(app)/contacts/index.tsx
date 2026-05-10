@@ -15,21 +15,8 @@ export const GET = createRoute((c) => {
 
 export const POST = createRoute(async (c) => {
   const body = await c.req.parseBody();
-  const values: ContactInput = {
-    firstName: stringValue(body.firstName).trim(),
-    lastName: stringValue(body.lastName).trim(),
-    email: stringValue(body.email).trim(),
-    phone: stringValue(body.phone).trim(),
-    city: stringValue(body.city).trim(),
-    country: stringValue(body.country).trim(),
-    organizationId: stringValue(body.organizationId).trim(),
-  };
-
-  const errors: Partial<Record<keyof ContactInput, string>> = {};
-  if (!values.firstName) errors.firstName = "First name is required";
-  if (!values.lastName) errors.lastName = "Last name is required";
-  if (!values.organizationId) errors.organizationId = "Organization is required";
-  else if (!orgs.get(values.organizationId)) errors.organizationId = "Organization not found";
+  const values = parseInput(body);
+  const errors = validate(values);
 
   if (Object.keys(errors).length > 0) {
     c.status(422);
@@ -44,6 +31,27 @@ export const POST = createRoute(async (c) => {
     },
   });
 });
+
+function parseInput(body: Record<string, unknown>): ContactInput {
+  return {
+    firstName: stringValue(body.firstName).trim(),
+    lastName: stringValue(body.lastName).trim(),
+    email: stringValue(body.email).trim(),
+    phone: stringValue(body.phone).trim(),
+    city: stringValue(body.city).trim(),
+    country: stringValue(body.country).trim(),
+    organizationId: stringValue(body.organizationId).trim(),
+  };
+}
+
+function validate(values: ContactInput) {
+  const errors: Partial<Record<keyof ContactInput, string>> = {};
+  if (!values.firstName) errors.firstName = "First name is required";
+  if (!values.lastName) errors.lastName = "Last name is required";
+  if (!values.organizationId) errors.organizationId = "Organization is required";
+  else if (!orgs.get(values.organizationId)) errors.organizationId = "Organization not found";
+  return errors;
+}
 
 function stringValue(v: unknown): string {
   return typeof v === "string" ? v : "";
