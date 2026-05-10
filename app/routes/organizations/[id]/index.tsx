@@ -6,6 +6,7 @@ import OrganizationsEditPage from "../../../features/organizations/Organizations
 
 export const GET = createRoute((c) => {
   const id = c.req.param("id");
+  if (!id) return c.notFound();
   const organization = orgs.get(id);
   if (!organization) return c.notFound();
   return c.render(OrganizationsDetailPage, { organization });
@@ -13,6 +14,7 @@ export const GET = createRoute((c) => {
 
 export const POST = createRoute(async (c) => {
   const id = c.req.param("id");
+  if (!id) return c.notFound();
   const organization = orgs.get(id);
   if (!organization) return c.notFound();
 
