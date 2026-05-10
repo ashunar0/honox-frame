@@ -5,7 +5,6 @@ export default function RefreshStats() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
-    if (isLoading) return;
     setIsLoading(true);
     try {
       await router.reload({ only: ["stats"] });

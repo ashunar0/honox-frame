@@ -1,6 +1,6 @@
 import RefreshStats from "../../islands/refresh-stats";
 
-type Stats = {
+export type Stats = {
   organizations: number;
   contacts: number;
   fetchedAt: string;
@@ -23,7 +23,7 @@ export default function DashboardPage({ stats }: Props) {
         <h2 class="text-lg font-bold">Stats</h2>
         <div class="flex items-center gap-3">
           <span class="text-xs text-slate-500">
-            fetched {formatTime(stats.fetchedAt)}
+            fetched {new Date(stats.fetchedAt).toLocaleTimeString("ja-JP")}
           </span>
           <RefreshStats />
         </div>
@@ -70,10 +70,3 @@ function StatCard({
   );
 }
 
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  const ss = String(d.getSeconds()).padStart(2, "0");
-  return `${hh}:${mm}:${ss}`;
-}
