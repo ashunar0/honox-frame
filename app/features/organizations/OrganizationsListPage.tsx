@@ -1,9 +1,12 @@
 import type { ListResult } from "../../data/organizations";
+import SearchInput from "../../islands/search-input";
 
 type Props = {
   result: ListResult;
   search: string;
 };
+
+const PARTIAL_KEYS = ["result", "search"];
 
 export default function OrganizationsListPage({ result, search }: Props) {
   return (
@@ -20,13 +23,17 @@ export default function OrganizationsListPage({ result, search }: Props) {
         </a>
       </header>
 
-      <form method="get" action="/organizations" class="mb-4 flex gap-2">
-        <input
-          type="text"
-          name="search"
-          value={search}
+      <form
+        method="get"
+        action="/organizations"
+        class="mb-4 flex gap-2"
+        data-honox-only={PARTIAL_KEYS.join(",")}
+      >
+        <SearchInput
+          initial={search}
+          action="/organizations"
+          only={PARTIAL_KEYS}
           placeholder="Search by name / email / city / country..."
-          class="border border-slate-300 px-3 py-2 rounded flex-1 text-sm"
         />
         <button
           type="submit"
@@ -38,6 +45,7 @@ export default function OrganizationsListPage({ result, search }: Props) {
           <a
             href="/organizations"
             class="px-4 py-2 border border-slate-300 rounded text-sm hover:bg-slate-50"
+            data-honox-only={PARTIAL_KEYS.join(",")}
           >
             Clear
           </a>
@@ -114,6 +122,7 @@ function Pagination({ result, search }: { result: ListResult; search: string }) 
           <a
             href={buildHref(prev)}
             class="px-3 py-1 border border-slate-300 rounded hover:bg-slate-50"
+            data-honox-only="result"
           >
             ← Prev
           </a>
@@ -126,6 +135,7 @@ function Pagination({ result, search }: { result: ListResult; search: string }) 
           <a
             href={buildHref(next)}
             class="px-3 py-1 border border-slate-300 rounded hover:bg-slate-50"
+            data-honox-only="result"
           >
             Next →
           </a>
