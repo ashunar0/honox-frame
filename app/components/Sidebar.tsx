@@ -5,7 +5,7 @@ export function Sidebar() {
     <aside class="w-56 p-4 bg-slate-100 border-r">
       <h2 class="font-bold text-lg mb-4">honox-frame</h2>
       <nav class="flex flex-col gap-2 mb-6">
-        <a href="/" class="text-blue-600 hover:underline">
+        <a href="/dashboard" class="text-blue-600 hover:underline">
           Dashboard
         </a>
         <a href="/organizations" class="text-blue-600 hover:underline">

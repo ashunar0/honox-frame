@@ -1,0 +1,54 @@
+type Stats = {
+  organizations: number;
+  contacts: number;
+};
+
+type Props = {
+  stats: Stats;
+};
+
+export default function DashboardPage({ stats }: Props) {
+  return (
+    <div>
+      <title>Dashboard</title>
+      <h1 class="text-3xl font-bold mb-2">Dashboard</h1>
+      <p class="text-sm text-slate-500 mb-6">
+        ある架空の会社の社内 CRM。 sidebar が維持されたまま各画面を navigate できるのだ。
+      </p>
+
+      <div class="grid grid-cols-2 gap-4 mb-8">
+        <StatCard label="Organizations" value={stats.organizations} href="/organizations" />
+        <StatCard label="Contacts" value={stats.contacts} href="/contacts" />
+      </div>
+
+      <section class="border border-slate-200 rounded p-4">
+        <h2 class="text-lg font-bold mb-2">Recent activity</h2>
+        <p class="text-sm text-slate-400 italic">
+          まだ何もないのだ。 Organizations / Contacts を追加すると表示される予定。
+        </p>
+      </section>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: number;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      class="block border border-slate-200 rounded p-4 hover:border-blue-400 hover:bg-blue-50 transition"
+    >
+      <div class="text-xs text-slate-500 uppercase tracking-wide mb-1">
+        {label}
+      </div>
+      <div class="text-3xl font-bold">{value}</div>
+    </a>
+  );
+}

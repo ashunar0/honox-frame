@@ -32,11 +32,20 @@ createClient({
   },
 });
 
-const PAGES = import.meta.glob<{ default: unknown }>("/app/pages/*.tsx");
+const PAGES = import.meta.glob<{ default: unknown }>(
+  "/app/features/**/*.tsx",
+);
+
+const PAGES_BY_NAME: Record<string, () => Promise<{ default: unknown }>> = {};
+for (const [path, loader] of Object.entries(PAGES)) {
+  const filename = path.split("/").pop();
+  if (!filename) continue;
+  const name = filename.replace(/\.tsx$/, "");
+  PAGES_BY_NAME[name] = loader;
+}
 
 setPageLoader(async (name) => {
-  const path = `/app/pages/${name}.tsx`;
-  const loader = PAGES[path];
+  const loader = PAGES_BY_NAME[name];
   if (!loader) return null;
   const mod = await loader();
   return mod.default;
