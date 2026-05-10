@@ -3,6 +3,7 @@ import { render } from "hono/jsx/dom";
 import { createClient } from "honox/client";
 import {
   HonoxFrameApp,
+  dispatchFlash,
   loadPageComponent,
   setPage,
   setPageLoader,
@@ -68,6 +69,8 @@ async function bootstrap(): Promise<void> {
       );
     }
   }
+
+  if (initialPage?.flash) dispatchFlash(initialPage.flash);
 
   bootstrapped = true;
   if (hydrateRef) await hydrateRef(document);

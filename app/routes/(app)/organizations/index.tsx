@@ -30,8 +30,10 @@ export const POST = createRoute(async (c) => {
     return c.render(OrganizationsNewPage, { values, errors });
   }
 
-  orgs.create(values);
-  return c.redirect("/organizations", 303);
+  const created = orgs.create(values);
+  return c.forward("/organizations", {
+    flash: { success: `Organization 「${created.name}」 を作成したのだ` },
+  });
 });
 
 function stringValue(v: unknown): string {

@@ -3,5 +3,7 @@ import { logout } from "../../../lib/auth";
 
 export const POST = createRoute((c) => {
   logout(c);
-  return c.redirect("/login", 303);
+  return c.forward("/login", {
+    flash: { info: "Signed out なのだ" },
+  });
 });

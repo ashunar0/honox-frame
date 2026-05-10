@@ -7,7 +7,15 @@ export type PageData = {
   url?: string;
   title?: string;
   partial?: string[];
+  flash?: Record<string, unknown>;
 };
+
+export const FLASH_EVENT = "honox:flash";
+
+export function dispatchFlash(payload: Record<string, unknown>): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(FLASH_EVENT, { detail: payload }));
+}
 
 type PageLoader = (name: string) => Promise<unknown>;
 
@@ -38,6 +46,7 @@ export function HonoxFrameApp({ initial }: { initial: AppState }) {
 
   useEffect(() => {
     exposedSetPage = async (next) => {
+      if (next.flash) dispatchFlash(next.flash);
       const isPartial = !!next.partial && next.partial.length > 0;
 
       if (isPartial) {

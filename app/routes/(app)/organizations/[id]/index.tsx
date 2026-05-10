@@ -28,7 +28,9 @@ export const POST = createRoute(async (c) => {
 
   if (method === "DELETE") {
     orgs.remove(id);
-    return c.redirect("/organizations", 303);
+    return c.forward("/organizations", {
+      flash: { success: `Organization 「${organization.name}」 を削除したのだ` },
+    });
   }
 
   const values: OrganizationInput = {
@@ -48,7 +50,9 @@ export const POST = createRoute(async (c) => {
   }
 
   orgs.update(id, values);
-  return c.redirect(`/organizations/${id}`, 303);
+  return c.forward(`/organizations/${id}`, {
+    flash: { success: "Organization を更新したのだ" },
+  });
 });
 
 function stringValue(v: unknown): string {

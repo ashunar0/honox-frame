@@ -22,7 +22,9 @@ export const POST = createRoute(async (c) => {
   }
 
   await login(c, user.id);
-  return c.redirect("/dashboard", 303);
+  return c.forward("/dashboard", {
+    flash: { success: `ようこそ、 ${user.name} なのだ` },
+  });
 });
 
 function stringValue(v: unknown): string {

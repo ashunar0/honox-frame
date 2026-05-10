@@ -24,7 +24,11 @@ export const POST = createRoute(async (c) => {
 
   if (method === "DELETE") {
     contacts.remove(id);
-    return c.redirect("/contacts", 303);
+    return c.forward("/contacts", {
+      flash: {
+        success: `Contact 「${contact.firstName} ${contact.lastName}」 を削除したのだ`,
+      },
+    });
   }
 
   const values: ContactInput = {
@@ -55,7 +59,9 @@ export const POST = createRoute(async (c) => {
   }
 
   contacts.update(id, values);
-  return c.redirect(`/contacts/${id}`, 303);
+  return c.forward(`/contacts/${id}`, {
+    flash: { success: "Contact を更新したのだ" },
+  });
 });
 
 function stringValue(v: unknown): string {

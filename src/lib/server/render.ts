@@ -1,10 +1,21 @@
 import type { Context, MiddlewareHandler } from "hono";
 import { Fragment, createElement } from "hono/jsx";
+import { consumeFlash, setFlash, type FlashPayload } from "./flash";
 
 type PageProps = Record<string, unknown>;
 type PageComponent = (props: any) => unknown;
 
 export const PAGE_META_ID = "__honox_page__";
+
+export type ForwardOptions = { flash?: FlashPayload };
+export type BackOptions = { flash?: FlashPayload; fallback?: string };
+
+declare module "hono" {
+  interface Context {
+    forward(url: string, opts?: ForwardOptions): Response;
+    back(opts?: BackOptions): Response;
+  }
+}
 
 export function withHonoxFrame(
   innerMiddleware: MiddlewareHandler,
@@ -26,6 +37,17 @@ export function withHonoxFrame(
           props,
         );
       }) as typeof c.render;
+
+      c.forward = (url, opts = {}) => {
+        if (opts.flash) setFlash(c, opts.flash);
+        return c.redirect(url, 303);
+      };
+
+      c.back = (opts = {}) => {
+        const url = c.req.header("referer") || opts.fallback || "/";
+        return c.forward(url, { flash: opts.flash });
+      };
+
       await next();
     });
   };
@@ -44,6 +66,7 @@ async function renderPage(
       ? parsePartialHeader(c.req.header("X-Honox-Partial-Data"))
       : null;
   const resolvedProps = await resolveProps(props ?? {}, partial);
+  const flash = partial ? null : consumeFlash(c);
 
   if (mode === "json") {
     return c.json({
@@ -51,6 +74,7 @@ async function renderPage(
       props: resolvedProps,
       url: c.req.url,
       partial: partial ?? undefined,
+      flash: flash ?? undefined,
     });
   }
 
@@ -58,6 +82,7 @@ async function renderPage(
     component: name,
     props: resolvedProps,
     url: c.req.url,
+    flash: flash ?? undefined,
   });
 
   const scriptEl = createElement("script", {

@@ -7,6 +7,7 @@ type PageData = {
   url?: string;
   title?: string;
   partial?: string[];
+  flash?: Record<string, unknown>;
 };
 
 type NavigateOptions = {

@@ -37,8 +37,12 @@ export const POST = createRoute(async (c) => {
     return c.render(ContactsNewPage, { organizations, values, errors });
   }
 
-  contacts.create(values);
-  return c.redirect("/contacts", 303);
+  const created = contacts.create(values);
+  return c.forward("/contacts", {
+    flash: {
+      success: `Contact 「${created.firstName} ${created.lastName}」 を作成したのだ`,
+    },
+  });
 });
 
 function stringValue(v: unknown): string {

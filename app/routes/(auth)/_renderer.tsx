@@ -1,6 +1,7 @@
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Link, Script } from "honox/server";
 import { withHonoxFrame } from "../../../src/lib/server/render";
+import Toast from "../../islands/toast";
 
 const renderer = jsxRenderer(({ children }) => {
   return (
@@ -12,7 +13,10 @@ const renderer = jsxRenderer(({ children }) => {
         <Link href="/app/style.css" rel="stylesheet" />
         <Script src="/app/client.ts" async />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toast />
+      </body>
     </html>
   );
 });

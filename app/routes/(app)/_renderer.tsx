@@ -4,6 +4,7 @@ import { Frame } from "../../../src/lib/server/Frame";
 import { withHonoxFrame } from "../../../src/lib/server/render";
 import { Sidebar } from "../../components/Sidebar";
 import type { User } from "../../data/users";
+import Toast from "../../islands/toast";
 
 const renderer = jsxRenderer(({ children }, c) => {
   const user = c.get("user") as User | undefined;
@@ -23,6 +24,7 @@ const renderer = jsxRenderer(({ children }, c) => {
             <Frame id="main">{children}</Frame>
           </main>
         </div>
+        <Toast />
       </body>
     </html>
   );
