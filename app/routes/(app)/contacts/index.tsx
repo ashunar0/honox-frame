@@ -1,9 +1,9 @@
 import { createRoute } from "honox/factory";
-import * as contacts from "../../data/contacts";
-import type { ContactInput } from "../../data/contacts";
-import * as orgs from "../../data/organizations";
-import ContactsListPage from "../../features/contacts/ContactsListPage";
-import ContactsNewPage from "../../features/contacts/ContactsNewPage";
+import * as contacts from "../../../data/contacts";
+import type { ContactInput } from "../../../data/contacts";
+import * as orgs from "../../../data/organizations";
+import ContactsListPage from "../../../features/contacts/ContactsListPage";
+import ContactsNewPage from "../../../features/contacts/ContactsNewPage";
 
 export const GET = createRoute((c) => {
   const search = c.req.query("search") ?? "";

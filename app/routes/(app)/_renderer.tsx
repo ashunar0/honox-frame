@@ -1,10 +1,12 @@
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Link, Script } from "honox/server";
-import { Frame } from "../../src/lib/server/Frame";
-import { withHonoxFrame } from "../../src/lib/server/render";
-import { Sidebar } from "../components/Sidebar";
+import { Frame } from "../../../src/lib/server/Frame";
+import { withHonoxFrame } from "../../../src/lib/server/render";
+import { Sidebar } from "../../components/Sidebar";
+import type { User } from "../../data/users";
 
-const renderer = jsxRenderer(({ children }) => {
+const renderer = jsxRenderer(({ children }, c) => {
+  const user = c.get("user") as User | undefined;
   return (
     <html lang="en">
       <head>
@@ -16,7 +18,7 @@ const renderer = jsxRenderer(({ children }) => {
       </head>
       <body>
         <div class="min-h-screen flex">
-          <Sidebar />
+          <Sidebar user={user} />
           <main class="flex-1 p-8">
             <Frame id="main">{children}</Frame>
           </main>

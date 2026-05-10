@@ -1,8 +1,8 @@
 import { createRoute } from "honox/factory";
-import * as orgs from "../../data/organizations";
-import type { OrganizationInput } from "../../data/organizations";
-import OrganizationsListPage from "../../features/organizations/OrganizationsListPage";
-import OrganizationsNewPage from "../../features/organizations/OrganizationsNewPage";
+import * as orgs from "../../../data/organizations";
+import type { OrganizationInput } from "../../../data/organizations";
+import OrganizationsListPage from "../../../features/organizations/OrganizationsListPage";
+import OrganizationsNewPage from "../../../features/organizations/OrganizationsNewPage";
 
 export const GET = createRoute((c) => {
   const search = c.req.query("search") ?? "";

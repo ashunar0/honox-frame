@@ -1,7 +1,7 @@
 import { createRoute } from "honox/factory";
-import * as contacts from "../../data/contacts";
-import * as orgs from "../../data/organizations";
-import DashboardPage from "../../features/dashboard/DashboardPage";
+import * as contacts from "../../../data/contacts";
+import * as orgs from "../../../data/organizations";
+import DashboardPage from "../../../features/dashboard/DashboardPage";
 
 export default createRoute((c) => {
   return c.render(DashboardPage, {

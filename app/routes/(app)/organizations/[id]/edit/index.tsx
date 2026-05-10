@@ -1,6 +1,6 @@
 import { createRoute } from "honox/factory";
-import * as orgs from "../../../../data/organizations";
-import OrganizationsEditPage from "../../../../features/organizations/OrganizationsEditPage";
+import * as orgs from "../../../../../data/organizations";
+import OrganizationsEditPage from "../../../../../features/organizations/OrganizationsEditPage";
 
 export default createRoute((c) => {
   const id = c.req.param("id");

@@ -1,9 +1,9 @@
 import { createRoute } from "honox/factory";
-import * as contacts from "../../../data/contacts";
-import * as orgs from "../../../data/organizations";
-import type { OrganizationInput } from "../../../data/organizations";
-import OrganizationsDetailPage from "../../../features/organizations/OrganizationsDetailPage";
-import OrganizationsEditPage from "../../../features/organizations/OrganizationsEditPage";
+import * as contacts from "../../../../data/contacts";
+import * as orgs from "../../../../data/organizations";
+import type { OrganizationInput } from "../../../../data/organizations";
+import OrganizationsDetailPage from "../../../../features/organizations/OrganizationsDetailPage";
+import OrganizationsEditPage from "../../../../features/organizations/OrganizationsEditPage";
 
 export const GET = createRoute((c) => {
   const id = c.req.param("id");
