@@ -1,14 +1,19 @@
 import { createRoute } from "honox/factory";
 import * as contacts from "../../../data/contacts";
 import type { ContactInput } from "../../../data/contacts";
+import { getDb } from "../../../data/db";
 import * as orgs from "../../../data/organizations";
 import ContactsListPage from "../../../features/contacts/ContactsListPage";
 import ContactsNewPage from "../../../features/contacts/ContactsNewPage";
 
-export const GET = createRoute((c) => {
+export const GET = createRoute(async (c) => {
   const search = c.req.query("search") ?? "";
   const page = Number(c.req.query("page") ?? 1) || 1;
-  const result = contacts.list({ search: search || undefined, page });
+  const db = getDb(c.env.DB);
+  const result = await contacts.list(db, {
+    search: search || undefined,
+    page,
+  });
 
   return c.render(ContactsListPage, { result, search });
 });
@@ -16,18 +21,19 @@ export const GET = createRoute((c) => {
 export const POST = createRoute(async (c) => {
   const body = await c.req.parseBody();
   const values = parseInput(body);
-  const errors = validate(values);
+  const db = getDb(c.env.DB);
+  const errors = await validate(db, values);
 
   if (Object.keys(errors).length > 0) {
     c.status(422);
-    const organizations = orgs.list({ perPage: 1000 }).items;
+    const { items: organizations } = await orgs.list(db, { perPage: 1000 });
     return c.render(ContactsNewPage, { organizations, values, errors });
   }
 
-  const created = contacts.create(values);
+  const created = await contacts.create(db, values);
   return c.forward("/contacts", {
     flash: {
-      success: `Contact 「${created.firstName} ${created.lastName}」 を作成したのだ`,
+      success: `Contact "${created.firstName} ${created.lastName}" created`,
     },
   });
 });
@@ -44,12 +50,15 @@ function parseInput(body: Record<string, unknown>): ContactInput {
   };
 }
 
-function validate(values: ContactInput) {
+async function validate(db: ReturnType<typeof getDb>, values: ContactInput) {
   const errors: Partial<Record<keyof ContactInput, string>> = {};
   if (!values.firstName) errors.firstName = "First name is required";
   if (!values.lastName) errors.lastName = "Last name is required";
-  if (!values.organizationId) errors.organizationId = "Organization is required";
-  else if (!orgs.get(values.organizationId)) errors.organizationId = "Organization not found";
+  if (!values.organizationId) {
+    errors.organizationId = "Organization is required";
+  } else if (!(await orgs.get(db, values.organizationId))) {
+    errors.organizationId = "Organization not found";
+  }
   return errors;
 }
 

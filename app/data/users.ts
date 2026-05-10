@@ -1,29 +1,23 @@
-export type User = {
-  id: string;
-  email: string;
-  name: string;
-  password: string;
-};
+import { eq } from "drizzle-orm";
+import { users } from "../../db/schema";
+import type { Db } from "./db";
 
-const store = new Map<string, User>();
+export type { User } from "../../db/schema";
+import type { User } from "../../db/schema";
 
-const seed: User[] = [
-  {
-    id: "user-1",
-    email: "admin@acme.example",
-    name: "Admin",
-    password: "password",
-  },
-];
-
-for (const user of seed) {
-  store.set(user.id, user);
+export async function get(db: Db, id: string): Promise<User | undefined> {
+  const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return row;
 }
 
-export function get(id: string): User | undefined {
-  return store.get(id);
-}
-
-export function findByEmail(email: string): User | undefined {
-  return Array.from(store.values()).find((u) => u.email === email);
+export async function findByEmail(
+  db: Db,
+  email: string,
+): Promise<User | undefined> {
+  const [row] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  return row;
 }

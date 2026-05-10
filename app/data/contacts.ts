@@ -1,8 +1,12 @@
-import * as orgs from "./organizations";
-import type { Organization } from "./organizations";
+import { asc, eq, like, or, sql } from "drizzle-orm";
+import { contacts, organizations } from "../../db/schema";
+import type { Db } from "./db";
+import type { Contact } from "../../db/schema";
+import type { Organization } from "../../db/schema";
 
-export type Contact = {
-  id: string;
+export type { Contact } from "../../db/schema";
+
+export type ContactInput = {
   firstName: string;
   lastName: string;
   email: string;
@@ -10,52 +14,10 @@ export type Contact = {
   city: string;
   country: string;
   organizationId: string;
-  createdAt: string;
 };
-
-export type ContactInput = Omit<Contact, "id" | "createdAt">;
 
 export type ContactWithOrganization = Contact & {
   organization?: Organization;
-};
-
-const store = new Map<string, Contact>();
-
-const allOrgs = orgs.list({ perPage: 100 }).items;
-const orgByName = new Map(allOrgs.map((o) => [o.name, o]));
-
-type SeedContact = Omit<ContactInput, "organizationId"> & { orgName: string };
-
-const seed: SeedContact[] = [
-  { firstName: "John", lastName: "Smith", email: "john@acme.example", phone: "03-1111-1001", city: "Tokyo", country: "Japan", orgName: "Acme Inc." },
-  { firstName: "Jane", lastName: "Doe", email: "jane@acme.example", phone: "03-1111-1002", city: "Tokyo", country: "Japan", orgName: "Acme Inc." },
-  { firstName: "Hank", lastName: "Scorpio", email: "hank@globex.example", phone: "03-3333-2001", city: "Yokohama", country: "Japan", orgName: "Globex Corp." },
-  { firstName: "Peter", lastName: "Gibbons", email: "peter@initech.example", phone: "06-5555-3001", city: "Osaka", country: "Japan", orgName: "Initech" },
-  { firstName: "Bill", lastName: "Lumbergh", email: "bill@initech.example", phone: "06-5555-3002", city: "Osaka", country: "Japan", orgName: "Initech" },
-  { firstName: "Albert", lastName: "Wesker", email: "wesker@umbrella.example", phone: "+1-555-4001", city: "Raccoon City", country: "USA", orgName: "Umbrella Corporation" },
-  { firstName: "Tony", lastName: "Stark", email: "tony@stark.example", phone: "+1-212-555-5001", city: "New York", country: "USA", orgName: "Stark Industries" },
-  { firstName: "Pepper", lastName: "Potts", email: "pepper@stark.example", phone: "+1-212-555-5002", city: "New York", country: "USA", orgName: "Stark Industries" },
-  { firstName: "Bruce", lastName: "Wayne", email: "bruce@wayne.example", phone: "+1-212-555-6001", city: "Gotham", country: "USA", orgName: "Wayne Enterprises" },
-  { firstName: "Lucius", lastName: "Fox", email: "lucius@wayne.example", phone: "+1-212-555-6002", city: "Gotham", country: "USA", orgName: "Wayne Enterprises" },
-  { firstName: "Miles", lastName: "Dyson", email: "miles@cyberdyne.example", phone: "+1-310-555-7001", city: "Sunnyvale", country: "USA", orgName: "Cyberdyne Systems" },
-];
-
-for (const { orgName, ...rest } of seed) {
-  const org = orgByName.get(orgName);
-  if (!org) continue;
-  const id = crypto.randomUUID();
-  store.set(id, {
-    ...rest,
-    organizationId: org.id,
-    id,
-    createdAt: new Date().toISOString(),
-  });
-}
-
-type ListOptions = {
-  search?: string;
-  page?: number;
-  perPage?: number;
 };
 
 export type ListResult = {
@@ -66,61 +28,105 @@ export type ListResult = {
   totalPages: number;
 };
 
-export function list({ search, page = 1, perPage = 10 }: ListOptions = {}): ListResult {
-  const all = Array.from(store.values()).sort((a, b) =>
-    `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`),
+type ListOptions = {
+  search?: string;
+  page?: number;
+  perPage?: number;
+};
+
+function searchWhere(search: string | undefined) {
+  if (!search) return undefined;
+  const term = `%${search}%`;
+  return or(
+    like(contacts.firstName, term),
+    like(contacts.lastName, term),
+    like(contacts.email, term),
+    like(contacts.city, term),
+    like(contacts.country, term),
   );
-  const filtered = search
-    ? all.filter((c) =>
-        [c.firstName, c.lastName, c.email, c.city, c.country].some((field) =>
-          field.toLowerCase().includes(search.toLowerCase()),
-        ),
-      )
-    : all;
-  const total = filtered.length;
+}
+
+export async function list(
+  db: Db,
+  { search, page = 1, perPage = 10 }: ListOptions = {},
+): Promise<ListResult> {
+  const where = searchWhere(search);
+  const totalRows = await db
+    .select({ c: sql<number>`count(*)` })
+    .from(contacts)
+    .where(where);
+  const total = Number(totalRows[0]?.c ?? 0);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const safePage = Math.min(Math.max(1, page), totalPages);
-  const start = (safePage - 1) * perPage;
-  const items = filtered.slice(start, start + perPage).map((c) => ({
-    ...c,
-    organization: orgs.get(c.organizationId),
+
+  const rows = await db
+    .select({ contact: contacts, organization: organizations })
+    .from(contacts)
+    .leftJoin(organizations, eq(contacts.organizationId, organizations.id))
+    .where(where)
+    .orderBy(asc(contacts.lastName), asc(contacts.firstName))
+    .limit(perPage)
+    .offset((safePage - 1) * perPage);
+
+  const items: ContactWithOrganization[] = rows.map((row) => ({
+    ...row.contact,
+    organization: row.organization ?? undefined,
   }));
+
   return { items, total, page: safePage, perPage, totalPages };
 }
 
-export function get(id: string): ContactWithOrganization | undefined {
-  const contact = store.get(id);
-  if (!contact) return undefined;
-  return { ...contact, organization: orgs.get(contact.organizationId) };
+export async function get(
+  db: Db,
+  id: string,
+): Promise<ContactWithOrganization | undefined> {
+  const [row] = await db
+    .select({ contact: contacts, organization: organizations })
+    .from(contacts)
+    .leftJoin(organizations, eq(contacts.organizationId, organizations.id))
+    .where(eq(contacts.id, id))
+    .limit(1);
+  if (!row) return undefined;
+  return { ...row.contact, organization: row.organization ?? undefined };
 }
 
-export function create(input: ContactInput): Contact {
+export async function create(db: Db, input: ContactInput): Promise<Contact> {
   const id = crypto.randomUUID();
-  const contact: Contact = { ...input, id, createdAt: new Date().toISOString() };
-  store.set(id, contact);
-  return contact;
+  const createdAt = new Date().toISOString();
+  await db.insert(contacts).values({ ...input, id, createdAt });
+  return { ...input, id, createdAt };
 }
 
-export function update(id: string, input: Partial<ContactInput>): Contact | undefined {
-  const current = store.get(id);
-  if (!current) return undefined;
-  const next = { ...current, ...input };
-  store.set(id, next);
-  return next;
+export async function update(
+  db: Db,
+  id: string,
+  input: Partial<ContactInput>,
+): Promise<Contact | undefined> {
+  const [updated] = await db
+    .update(contacts)
+    .set(input)
+    .where(eq(contacts.id, id))
+    .returning();
+  return updated;
 }
 
-export function remove(id: string): boolean {
-  return store.delete(id);
+export async function remove(db: Db, id: string): Promise<boolean> {
+  const result = await db.delete(contacts).where(eq(contacts.id, id));
+  return (result.meta?.changes ?? 0) > 0;
 }
 
-export function count(): number {
-  return store.size;
+export async function count(db: Db): Promise<number> {
+  const rows = await db.select({ c: sql<number>`count(*)` }).from(contacts);
+  return Number(rows[0]?.c ?? 0);
 }
 
-export function listByOrganization(organizationId: string): Contact[] {
-  return Array.from(store.values())
-    .filter((c) => c.organizationId === organizationId)
-    .sort((a, b) =>
-      `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`),
-    );
+export async function listByOrganization(
+  db: Db,
+  organizationId: string,
+): Promise<Contact[]> {
+  return await db
+    .select()
+    .from(contacts)
+    .where(eq(contacts.organizationId, organizationId))
+    .orderBy(asc(contacts.lastName), asc(contacts.firstName));
 }

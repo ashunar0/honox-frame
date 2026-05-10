@@ -29,7 +29,7 @@ export default function ContactsDetailPage({ contact }: Props) {
             <form
               method="post"
               action={`/contacts/${contact.id}`}
-              onsubmit="return confirm('この Contact を削除するのだ？')"
+              onsubmit="return confirm('Delete this contact?')"
               class="inline"
             >
               <input type="hidden" name="_method" value="DELETE" />

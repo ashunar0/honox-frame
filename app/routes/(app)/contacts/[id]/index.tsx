@@ -2,14 +2,16 @@ import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 import * as contacts from "../../../../data/contacts";
 import type { Contact, ContactInput } from "../../../../data/contacts";
+import { getDb, type Db } from "../../../../data/db";
 import * as orgs from "../../../../data/organizations";
 import ContactsDetailPage from "../../../../features/contacts/ContactsDetailPage";
 import ContactsEditPage from "../../../../features/contacts/ContactsEditPage";
 
-export const GET = createRoute((c) => {
+export const GET = createRoute(async (c) => {
   const id = c.req.param("id");
   if (!id) return c.notFound();
-  const contact = contacts.get(id);
+  const db = getDb(c.env.DB);
+  const contact = await contacts.get(db, id);
   if (!contact) return c.notFound();
   return c.render(ContactsDetailPage, { contact });
 });
@@ -17,35 +19,37 @@ export const GET = createRoute((c) => {
 export const POST = createRoute(async (c) => {
   const id = c.req.param("id");
   if (!id) return c.notFound();
-  const contact = contacts.get(id);
+  const db = getDb(c.env.DB);
+  const contact = await contacts.get(db, id);
   if (!contact) return c.notFound();
 
   const body = await c.req.parseBody();
   if (stringValue(body._method).toUpperCase() === "DELETE") {
-    return handleDelete(c, contact);
+    return handleDelete(c, db, contact);
   }
-  return handleUpdate(c, contact, body);
+  return handleUpdate(c, db, contact, body);
 });
 
-function handleDelete(c: Context, contact: Contact) {
-  contacts.remove(contact.id);
+async function handleDelete(c: Context, db: Db, contact: Contact) {
+  await contacts.remove(db, contact.id);
   return c.forward("/contacts", {
     flash: {
-      success: `Contact 「${contact.firstName} ${contact.lastName}」 を削除したのだ`,
+      success: `Contact "${contact.firstName} ${contact.lastName}" deleted`,
     },
   });
 }
 
-function handleUpdate(
+async function handleUpdate(
   c: Context,
+  db: Db,
   contact: Contact,
   body: Record<string, unknown>,
 ) {
   const values = parseInput(body);
-  const errors = validate(values);
+  const errors = await validate(db, values);
   if (Object.keys(errors).length > 0) {
     c.status(422);
-    const organizations = orgs.list({ perPage: 1000 }).items;
+    const { items: organizations } = await orgs.list(db, { perPage: 1000 });
     return c.render(ContactsEditPage, {
       contact,
       organizations,
@@ -53,9 +57,9 @@ function handleUpdate(
       errors,
     });
   }
-  contacts.update(contact.id, values);
+  await contacts.update(db, contact.id, values);
   return c.forward(`/contacts/${contact.id}`, {
-    flash: { success: "Contact を更新したのだ" },
+    flash: { success: "Contact updated" },
   });
 }
 
@@ -71,12 +75,15 @@ function parseInput(body: Record<string, unknown>): ContactInput {
   };
 }
 
-function validate(values: ContactInput) {
+async function validate(db: Db, values: ContactInput) {
   const errors: Partial<Record<keyof ContactInput, string>> = {};
   if (!values.firstName) errors.firstName = "First name is required";
   if (!values.lastName) errors.lastName = "Last name is required";
-  if (!values.organizationId) errors.organizationId = "Organization is required";
-  else if (!orgs.get(values.organizationId)) errors.organizationId = "Organization not found";
+  if (!values.organizationId) {
+    errors.organizationId = "Organization is required";
+  } else if (!(await orgs.get(db, values.organizationId))) {
+    errors.organizationId = "Organization not found";
+  }
   return errors;
 }
 

@@ -16,21 +16,22 @@ export default function DashboardPage({ stats }: Props) {
       <title>Dashboard</title>
       <h1 class="text-3xl font-bold mb-2">Dashboard</h1>
       <p class="text-sm text-slate-500 mb-6">
-        ある架空の会社の社内 CRM。 sidebar が維持されたまま各画面を navigate できるのだ。
+        A demo CRM for a fictional company. The sidebar persists across navigation between pages.
       </p>
 
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-lg font-bold">Stats</h2>
         <div class="flex items-center gap-3">
           <span class="text-xs text-slate-500">
-            fetched {new Date(stats.fetchedAt).toLocaleTimeString("ja-JP")}
+            fetched {new Date(stats.fetchedAt).toLocaleTimeString()}
           </span>
           <RefreshStats />
         </div>
       </div>
       <p class="text-xs text-slate-400 mb-3">
-        ↑ 「Refresh stats」を押すと <code>data-honox-only="stats"</code>{" "}
-        相当の partial reload が走り、 sidebar も page 全体も再 fetch されない。
+        Click "Refresh stats" to trigger a partial reload via{" "}
+        <code>data-honox-only="stats"</code>. The sidebar and the rest of the
+        page are not re-fetched.
       </p>
 
       <div class="grid grid-cols-2 gap-4 mb-8">
@@ -41,7 +42,7 @@ export default function DashboardPage({ stats }: Props) {
       <section class="border border-slate-200 rounded p-4">
         <h2 class="text-lg font-bold mb-2">Recent activity</h2>
         <p class="text-sm text-slate-400 italic">
-          まだ何もないのだ。 Organizations / Contacts を追加すると表示される予定。
+          Nothing yet. Activity will appear here as you add organizations and contacts.
         </p>
       </section>
     </div>

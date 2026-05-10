@@ -51,7 +51,7 @@ export default function ContactsListPage({ result, search }: Props) {
 
       {result.items.length === 0 ? (
         <p class="text-slate-400 italic py-8 text-center border border-dashed border-slate-300 rounded">
-          一致する Contact がないのだ。
+          No contacts found.
         </p>
       ) : (
         <div class="border border-slate-200 rounded overflow-hidden">

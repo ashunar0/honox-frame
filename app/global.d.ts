@@ -1,9 +1,15 @@
 import type {} from "hono";
+import type { User } from "./data/users";
 
 declare module "hono" {
   interface Env {
-    Variables: {};
-    Bindings: {};
+    Variables: {
+      user?: User;
+    };
+    Bindings: {
+      DB: D1Database;
+      SESSION_SECRET?: string;
+    };
   }
 
   interface ContextRenderer {

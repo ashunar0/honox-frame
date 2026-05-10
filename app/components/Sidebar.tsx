@@ -22,7 +22,7 @@ export function Sidebar({ user }: Props = {}) {
       </nav>
       <div class="border-t pt-4">
         <p class="text-xs text-slate-500 mb-2">
-          Counter（sidebar / Frame の外）
+          Counter (outside the Frame)
         </p>
         <Counter />
       </div>

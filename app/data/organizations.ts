@@ -1,36 +1,16 @@
-export type Organization = {
-  id: string;
+import { asc, eq, like, or, sql } from "drizzle-orm";
+import { organizations } from "../../db/schema";
+import type { Db } from "./db";
+
+export type { Organization } from "../../db/schema";
+import type { Organization } from "../../db/schema";
+
+export type OrganizationInput = {
   name: string;
   email: string;
   phone: string;
   city: string;
   country: string;
-  createdAt: string;
-};
-
-export type OrganizationInput = Omit<Organization, "id" | "createdAt">;
-
-const store = new Map<string, Organization>();
-
-const seed: OrganizationInput[] = [
-  { name: "Acme Inc.", email: "info@acme.example", phone: "03-1111-2222", city: "Tokyo", country: "Japan" },
-  { name: "Globex Corp.", email: "hello@globex.example", phone: "03-3333-4444", city: "Yokohama", country: "Japan" },
-  { name: "Initech", email: "contact@initech.example", phone: "06-5555-6666", city: "Osaka", country: "Japan" },
-  { name: "Umbrella Corporation", email: "info@umbrella.example", phone: "+1-555-0100", city: "Raccoon City", country: "USA" },
-  { name: "Stark Industries", email: "press@stark.example", phone: "+1-212-555-0199", city: "New York", country: "USA" },
-  { name: "Wayne Enterprises", email: "ir@wayne.example", phone: "+1-212-555-0182", city: "Gotham", country: "USA" },
-  { name: "Cyberdyne Systems", email: "info@cyberdyne.example", phone: "+1-310-555-0123", city: "Sunnyvale", country: "USA" },
-];
-
-for (const input of seed) {
-  const id = crypto.randomUUID();
-  store.set(id, { ...input, id, createdAt: new Date().toISOString() });
-}
-
-type ListOptions = {
-  search?: string;
-  page?: number;
-  perPage?: number;
 };
 
 export type ListResult = {
@@ -41,48 +21,89 @@ export type ListResult = {
   totalPages: number;
 };
 
-export function list({ search, page = 1, perPage = 10 }: ListOptions = {}): ListResult {
-  const all = Array.from(store.values()).sort((a, b) =>
-    a.name.localeCompare(b.name),
+type ListOptions = {
+  search?: string;
+  page?: number;
+  perPage?: number;
+};
+
+function searchWhere(search: string | undefined) {
+  if (!search) return undefined;
+  const term = `%${search}%`;
+  return or(
+    like(organizations.name, term),
+    like(organizations.email, term),
+    like(organizations.city, term),
+    like(organizations.country, term),
   );
-  const filtered = search
-    ? all.filter((o) =>
-        [o.name, o.email, o.city, o.country].some((field) =>
-          field.toLowerCase().includes(search.toLowerCase()),
-        ),
-      )
-    : all;
-  const total = filtered.length;
+}
+
+export async function list(
+  db: Db,
+  { search, page = 1, perPage = 10 }: ListOptions = {},
+): Promise<ListResult> {
+  const where = searchWhere(search);
+  const totalRows = await db
+    .select({ c: sql<number>`count(*)` })
+    .from(organizations)
+    .where(where);
+  const total = Number(totalRows[0]?.c ?? 0);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const safePage = Math.min(Math.max(1, page), totalPages);
-  const start = (safePage - 1) * perPage;
-  const items = filtered.slice(start, start + perPage);
+
+  const items = await db
+    .select()
+    .from(organizations)
+    .where(where)
+    .orderBy(asc(organizations.name))
+    .limit(perPage)
+    .offset((safePage - 1) * perPage);
+
   return { items, total, page: safePage, perPage, totalPages };
 }
 
-export function get(id: string): Organization | undefined {
-  return store.get(id);
+export async function get(db: Db, id: string): Promise<Organization | undefined> {
+  const [row] = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.id, id))
+    .limit(1);
+  return row;
 }
 
-export function create(input: OrganizationInput): Organization {
+export async function create(
+  db: Db,
+  input: OrganizationInput,
+): Promise<Organization> {
   const id = crypto.randomUUID();
-  const org: Organization = { ...input, id, createdAt: new Date().toISOString() };
-  store.set(id, org);
-  return org;
+  const createdAt = new Date().toISOString();
+  await db.insert(organizations).values({ ...input, id, createdAt });
+  return { ...input, id, createdAt };
 }
 
-export function update(id: string, input: Partial<OrganizationInput>): Organization | undefined {
-  const current = store.get(id);
-  if (!current) return undefined;
-  const next = { ...current, ...input };
-  store.set(id, next);
-  return next;
+export async function update(
+  db: Db,
+  id: string,
+  input: Partial<OrganizationInput>,
+): Promise<Organization | undefined> {
+  const [updated] = await db
+    .update(organizations)
+    .set(input)
+    .where(eq(organizations.id, id))
+    .returning();
+  return updated;
 }
 
-export function remove(id: string): boolean {
-  return store.delete(id);
+export async function remove(db: Db, id: string): Promise<boolean> {
+  const result = await db
+    .delete(organizations)
+    .where(eq(organizations.id, id));
+  return (result.meta?.changes ?? 0) > 0;
 }
 
-export function count(): number {
-  return store.size;
+export async function count(db: Db): Promise<number> {
+  const rows = await db
+    .select({ c: sql<number>`count(*)` })
+    .from(organizations);
+  return Number(rows[0]?.c ?? 0);
 }

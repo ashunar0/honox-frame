@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import { createRoute } from "honox/factory";
 import * as contacts from "../../../../data/contacts";
+import { getDb, type Db } from "../../../../data/db";
 import * as orgs from "../../../../data/organizations";
 import type {
   Organization,
@@ -9,12 +10,13 @@ import type {
 import OrganizationsDetailPage from "../../../../features/organizations/OrganizationsDetailPage";
 import OrganizationsEditPage from "../../../../features/organizations/OrganizationsEditPage";
 
-export const GET = createRoute((c) => {
+export const GET = createRoute(async (c) => {
   const id = c.req.param("id");
   if (!id) return c.notFound();
-  const organization = orgs.get(id);
+  const db = getDb(c.env.DB);
+  const organization = await orgs.get(db, id);
   if (!organization) return c.notFound();
-  const orgContacts = contacts.listByOrganization(id);
+  const orgContacts = await contacts.listByOrganization(db, id);
   return c.render(OrganizationsDetailPage, {
     organization,
     contacts: orgContacts,
@@ -24,25 +26,27 @@ export const GET = createRoute((c) => {
 export const POST = createRoute(async (c) => {
   const id = c.req.param("id");
   if (!id) return c.notFound();
-  const organization = orgs.get(id);
+  const db = getDb(c.env.DB);
+  const organization = await orgs.get(db, id);
   if (!organization) return c.notFound();
 
   const body = await c.req.parseBody();
   if (stringValue(body._method).toUpperCase() === "DELETE") {
-    return handleDelete(c, organization);
+    return handleDelete(c, db, organization);
   }
-  return handleUpdate(c, organization, body);
+  return handleUpdate(c, db, organization, body);
 });
 
-function handleDelete(c: Context, organization: Organization) {
-  orgs.remove(organization.id);
+async function handleDelete(c: Context, db: Db, organization: Organization) {
+  await orgs.remove(db, organization.id);
   return c.forward("/organizations", {
-    flash: { success: `Organization 「${organization.name}」 を削除したのだ` },
+    flash: { success: `Organization "${organization.name}" deleted` },
   });
 }
 
-function handleUpdate(
+async function handleUpdate(
   c: Context,
+  db: Db,
   organization: Organization,
   body: Record<string, unknown>,
 ) {
@@ -52,9 +56,9 @@ function handleUpdate(
     c.status(422);
     return c.render(OrganizationsEditPage, { organization, values, errors });
   }
-  orgs.update(organization.id, values);
+  await orgs.update(db, organization.id, values);
   return c.forward(`/organizations/${organization.id}`, {
-    flash: { success: "Organization を更新したのだ" },
+    flash: { success: "Organization updated" },
   });
 }
 

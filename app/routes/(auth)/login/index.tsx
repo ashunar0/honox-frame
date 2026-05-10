@@ -1,7 +1,8 @@
 import { createRoute } from "honox/factory";
+import { getDb } from "../../../data/db";
 import * as users from "../../../data/users";
 import LoginPage from "../../../features/auth/LoginPage";
-import { login } from "../../../lib/auth";
+import { login, verifyPassword } from "../../../lib/auth";
 
 export const GET = createRoute((c) => {
   return c.render(LoginPage, {});
@@ -12,18 +13,19 @@ export const POST = createRoute(async (c) => {
   const email = stringValue(body.email).trim();
   const password = stringValue(body.password);
 
-  const user = users.findByEmail(email);
-  if (!user || user.password !== password) {
+  const db = getDb(c.env.DB);
+  const user = await users.findByEmail(db, email);
+  if (!user || !(await verifyPassword(password, user.passwordHash, user.passwordSalt))) {
     c.status(422);
     return c.render(LoginPage, {
       values: { email },
-      error: "Email または password が違うのだ",
+      error: "Invalid email or password",
     });
   }
 
   await login(c, user.id);
   return c.forward("/dashboard", {
-    flash: { success: `ようこそ、 ${user.name} なのだ` },
+    flash: { success: `Welcome back, ${user.name}` },
   });
 });
 

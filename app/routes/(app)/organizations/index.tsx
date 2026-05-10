@@ -1,13 +1,15 @@
 import { createRoute } from "honox/factory";
+import { getDb } from "../../../data/db";
 import * as orgs from "../../../data/organizations";
 import type { OrganizationInput } from "../../../data/organizations";
 import OrganizationsListPage from "../../../features/organizations/OrganizationsListPage";
 import OrganizationsNewPage from "../../../features/organizations/OrganizationsNewPage";
 
-export const GET = createRoute((c) => {
+export const GET = createRoute(async (c) => {
   const search = c.req.query("search") ?? "";
   const page = Number(c.req.query("page") ?? 1) || 1;
-  const result = orgs.list({ search: search || undefined, page });
+  const db = getDb(c.env.DB);
+  const result = await orgs.list(db, { search: search || undefined, page });
 
   return c.render(OrganizationsListPage, { result, search });
 });
@@ -22,9 +24,10 @@ export const POST = createRoute(async (c) => {
     return c.render(OrganizationsNewPage, { values, errors });
   }
 
-  const created = orgs.create(values);
+  const db = getDb(c.env.DB);
+  const created = await orgs.create(db, values);
   return c.forward("/organizations", {
-    flash: { success: `Organization 「${created.name}」 を作成したのだ` },
+    flash: { success: `Organization "${created.name}" created` },
   });
 });
 

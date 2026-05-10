@@ -17,7 +17,7 @@ export default function LoginPage({ values = {}, error }: Props) {
           <h1 class="text-2xl font-bold">Sign in</h1>
           <p class="text-xs text-slate-500">
             Demo account:{" "}
-            <code class="bg-slate-100 px-1 rounded">admin@acme.example</code>{" "}
+            <code class="bg-slate-100 px-1 rounded">test@example.com</code>{" "}
             / <code class="bg-slate-100 px-1 rounded">password</code>
           </p>
         </header>
@@ -35,7 +35,7 @@ export default function LoginPage({ values = {}, error }: Props) {
           <input
             type="email"
             name="email"
-            value={values.email ?? ""}
+            value={values.email ?? "test@example.com"}
             required
             autofocus
             class="w-full border border-slate-300 px-3 py-2 rounded text-sm"
@@ -49,6 +49,7 @@ export default function LoginPage({ values = {}, error }: Props) {
           <input
             type="password"
             name="password"
+            value="password"
             required
             class="w-full border border-slate-300 px-3 py-2 rounded text-sm"
           />

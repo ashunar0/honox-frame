@@ -9,7 +9,7 @@ export default function RefreshStats() {
     setIsLoading(true);
     try {
       await router.reload({ only: ["stats"] });
-      toast.info("Stats を更新したのだ");
+      toast.info("Stats refreshed");
     } finally {
       setIsLoading(false);
     }

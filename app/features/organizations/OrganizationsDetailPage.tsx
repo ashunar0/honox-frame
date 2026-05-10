@@ -33,7 +33,7 @@ export default function OrganizationsDetailPage({
             <form
               method="post"
               action={`/organizations/${organization.id}`}
-              onsubmit="return confirm('この Organization を削除するのだ？')"
+              onsubmit="return confirm('Delete this organization?')"
               class="inline"
             >
               <input type="hidden" name="_method" value="DELETE" />
@@ -77,7 +77,7 @@ export default function OrganizationsDetailPage({
         </header>
         {contacts.length === 0 ? (
           <p class="text-sm text-slate-400 italic py-4 text-center border border-dashed border-slate-300 rounded">
-            この Organization に紐付く Contact はまだないのだ。
+            No contacts linked to this organization yet.
           </p>
         ) : (
           <ul class="border border-slate-200 rounded divide-y divide-slate-100 bg-white">
