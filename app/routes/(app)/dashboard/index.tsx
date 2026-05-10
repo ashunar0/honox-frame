@@ -5,9 +5,10 @@ import DashboardPage from "../../../features/dashboard/DashboardPage";
 
 export default createRoute((c) => {
   return c.render(DashboardPage, {
-    stats: {
+    stats: () => ({
       organizations: orgs.count(),
       contacts: contacts.count(),
-    },
+      fetchedAt: new Date().toISOString(),
+    }),
   });
 });
