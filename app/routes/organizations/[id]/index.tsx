@@ -1,4 +1,5 @@
 import { createRoute } from "honox/factory";
+import * as contacts from "../../../data/contacts";
 import * as orgs from "../../../data/organizations";
 import type { OrganizationInput } from "../../../data/organizations";
 import OrganizationsDetailPage from "../../../features/organizations/OrganizationsDetailPage";
@@ -9,7 +10,11 @@ export const GET = createRoute((c) => {
   if (!id) return c.notFound();
   const organization = orgs.get(id);
   if (!organization) return c.notFound();
-  return c.render(OrganizationsDetailPage, { organization });
+  const orgContacts = contacts.listByOrganization(id);
+  return c.render(OrganizationsDetailPage, {
+    organization,
+    contacts: orgContacts,
+  });
 });
 
 export const POST = createRoute(async (c) => {

@@ -1,10 +1,15 @@
+import type { Contact } from "../../data/contacts";
 import type { Organization } from "../../data/organizations";
 
 type Props = {
   organization: Organization;
+  contacts: Contact[];
 };
 
-export default function OrganizationsDetailPage({ organization }: Props) {
+export default function OrganizationsDetailPage({
+  organization,
+  contacts,
+}: Props) {
   return (
     <div>
       <title>{organization.name}</title>
@@ -57,6 +62,41 @@ export default function OrganizationsDetailPage({ organization }: Props) {
           <time>{new Date(organization.createdAt).toLocaleString()}</time>
         </Desc>
       </dl>
+
+      <section class="mt-8 max-w-xl">
+        <header class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-bold">
+            Contacts <span class="text-slate-400 font-normal">({contacts.length})</span>
+          </h2>
+          <a
+            href="/contacts/new"
+            class="text-sm text-blue-600 hover:underline"
+          >
+            + Add contact
+          </a>
+        </header>
+        {contacts.length === 0 ? (
+          <p class="text-sm text-slate-400 italic py-4 text-center border border-dashed border-slate-300 rounded">
+            この Organization に紐付く Contact はまだないのだ。
+          </p>
+        ) : (
+          <ul class="border border-slate-200 rounded divide-y divide-slate-100 bg-white">
+            {contacts.map((c) => (
+              <li class="px-4 py-2 text-sm hover:bg-slate-50">
+                <a
+                  href={`/contacts/${c.id}`}
+                  class="flex items-baseline justify-between"
+                >
+                  <span class="text-blue-600 hover:underline font-medium">
+                    {c.firstName} {c.lastName}
+                  </span>
+                  <span class="text-slate-500 text-xs">{c.email}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
