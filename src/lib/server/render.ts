@@ -7,6 +7,16 @@ type PageComponent = (props: any) => unknown;
 
 export const PAGE_META_ID = "__honox_page__";
 
+let pageRegistry: Map<unknown, string> | null = null;
+
+export function setPageRegistry(registry: Map<unknown, string>): void {
+  pageRegistry = registry;
+}
+
+function resolveName(Component: PageComponent): string {
+  return pageRegistry?.get(Component) ?? Component.name ?? "Page";
+}
+
 export type ForwardOptions = { flash?: FlashPayload };
 export type BackOptions = { flash?: FlashPayload; fallback?: string };
 
@@ -60,7 +70,7 @@ async function renderPage(
   props: PageProps | undefined,
 ): Promise<Response> {
   const mode = c.req.header("X-Honox-Mode") || "html";
-  const name = Component.name || "Page";
+  const name = resolveName(Component);
   const partial =
     mode === "json"
       ? parsePartialHeader(c.req.header("X-Honox-Partial-Data"))
