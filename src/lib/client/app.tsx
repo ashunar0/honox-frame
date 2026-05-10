@@ -17,6 +17,12 @@ export function dispatchFlash(payload: Record<string, unknown>): void {
   window.dispatchEvent(new CustomEvent(FLASH_EVENT, { detail: payload }));
 }
 
+export const toast = {
+  success: (message: string) => dispatchFlash({ success: message }),
+  error: (message: string) => dispatchFlash({ error: message }),
+  info: (message: string) => dispatchFlash({ info: message }),
+};
+
 type PageLoader = (name: string) => Promise<unknown>;
 
 let pageLoader: PageLoader | null = null;

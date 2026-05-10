@@ -1,4 +1,5 @@
 import { useState } from "hono/jsx";
+import { toast } from "../../src/lib/client/app";
 import { router } from "../../src/lib/client/navigate";
 
 export default function RefreshStats() {
@@ -8,6 +9,7 @@ export default function RefreshStats() {
     setIsLoading(true);
     try {
       await router.reload({ only: ["stats"] });
+      toast.info("Stats を更新したのだ");
     } finally {
       setIsLoading(false);
     }
