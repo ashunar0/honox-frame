@@ -98,10 +98,19 @@ async function submitForm(
     | HTMLButtonElement
     | HTMLInputElement
     | null;
-  const action = submitter?.formAction || form.action || location.href;
-  const method = (submitter?.formMethod || form.method || "GET").toUpperCase();
+  const submitterAction = submitter?.hasAttribute("formaction")
+    ? submitter.formAction
+    : "";
+  const submitterMethod = submitter?.hasAttribute("formmethod")
+    ? submitter.formMethod
+    : "";
+  const submitterEnctype = submitter?.hasAttribute("formenctype")
+    ? submitter.formEnctype
+    : "";
+  const action = submitterAction || form.action || location.href;
+  const method = (submitterMethod || form.method || "GET").toUpperCase();
   const enctype =
-    submitter?.formEnctype ||
+    submitterEnctype ||
     form.enctype ||
     "application/x-www-form-urlencoded";
 
