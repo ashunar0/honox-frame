@@ -1,3 +1,4 @@
+import Counter from "../../islands/counter";
 import RefreshStats from "../../islands/refresh-stats";
 
 export type Stats = {
@@ -38,6 +39,13 @@ export default function DashboardPage({ stats }: Props) {
         <StatCard label="Organizations" value={stats.organizations} href="/organizations" />
         <StatCard label="Contacts" value={stats.contacts} href="/contacts" />
       </div>
+
+      <section class="border border-slate-200 rounded p-4 mb-4">
+        <p class="text-xs text-slate-500 mb-2">
+          Counter (inside the page)
+        </p>
+        <Counter />
+      </section>
 
       <section class="border border-slate-200 rounded p-4">
         <h2 class="text-lg font-bold mb-2">Recent activity</h2>
