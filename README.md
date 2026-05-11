@@ -9,10 +9,10 @@ HonoX (MPA + islands) + SPA navigation + 3-mode envelope flexibility
 
 ## position
 
-| FW | wire format | client runtime | direction |
-|---|---|---|---|
-| Hotwire | HTML only | Stimulus | Rails 進化 |
-| Inertia | JSON only | React / Vue | SPA 起点 |
+| FW              | wire format                   | client runtime      | direction  |
+| --------------- | ----------------------------- | ------------------- | ---------- |
+| Hotwire         | HTML only                     | Stimulus            | Rails 進化 |
+| Inertia         | JSON only                     | React / Vue         | SPA 起点   |
 | **honox-frame** | HTML + JSON + Frame の 3-mode | hono/jsx/dom (~5kb) | HonoX 進化 |
 
 ## quick start
@@ -22,7 +22,7 @@ bun install
 bun run dev          # http://localhost:5173
 ```
 
-Demo account: `admin@acme.example` / `password`
+Demo account: `test@example.com` / `password`
 
 `app/` 以下が show case（Ping CRM 風 mini SaaS）になっていて、現バージョンの全機能を demonstrate する。
 
@@ -82,13 +82,13 @@ PoC が固まったら `src/lib/` を `@xxx/honox-frame` package に extract し
 
 ## scripts
 
-| command | 用途 |
-|---|---|
-| `bun run dev` | Vite dev server |
-| `bun run build` | production build |
-| `bun run preview` | wrangler dev |
-| `bun run deploy` | Cloudflare Workers にデプロイ |
-| `bun run typecheck` | `tsc --noEmit` |
+| command             | 用途                          |
+| ------------------- | ----------------------------- |
+| `bun run dev`       | Vite dev server               |
+| `bun run build`     | production build              |
+| `bun run preview`   | wrangler dev                  |
+| `bun run deploy`    | Cloudflare Workers にデプロイ |
+| `bun run typecheck` | `tsc --noEmit`                |
 
 ## status
 
